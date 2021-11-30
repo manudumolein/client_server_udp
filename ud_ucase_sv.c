@@ -53,20 +53,20 @@ main(int argc, char *argv[])
     /* Receive messages, convert to uppercase, and return to client */
 
     for (;;) {
+        t_data received_data;
         len = sizeof(struct sockaddr_un);
-        numBytes = recvfrom(sfd, buf, BUF_SIZE, 0,
+        numBytes = recvfrom(sfd, &received_data, sizeof(received_data), 0,
                             (struct sockaddr *) &claddr, &len);
         if (numBytes == -1)
             errExit("recvfrom");
 
-        printf("Server received %ld bytes from %s\n", (long) numBytes,
-                claddr.sun_path);
+        printf("Received %d: %d", received_data.IO, received_data.period);
         /*FIXME: above: should use %zd here, and remove (long) cast */
 
-        for (j = 0; j < numBytes; j++)
-            buf[j] = toupper((unsigned char) buf[j]);
-
-        if (sendto(sfd, buf, numBytes, 0, (struct sockaddr *) &claddr, len) !=
+        received_data.IO++;
+        received_data.period++;
+        
+        if (sendto(sfd, &received_data, sizeof(received_data), 0, (struct sockaddr *) &claddr, len) !=
                 numBytes)
             fatal("sendto");
     }

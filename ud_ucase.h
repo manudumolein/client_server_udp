@@ -32,3 +32,8 @@
                                    between client and server */
 
 #define SV_SOCK_PATH "/tmp/ud_ucase"
+
+struct {
+   int IO;
+   int period;
+} typedef t_data;

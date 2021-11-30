@@ -52,19 +52,18 @@ main(int argc, char *argv[])
 
     /* Send messages to server; echo responses on stdout */
 
-    for (j = 1; j < argc; j++) {
-        msgLen = strlen(argv[j]);       /* May be longer than BUF_SIZE */
-        if (sendto(sfd, argv[j], msgLen, 0, (struct sockaddr *) &svaddr,
-                sizeof(struct sockaddr_un)) != msgLen)
-            fatal("sendto");
+    t_data data={40,100};
+    if (sendto(sfd, &data, sizeof(data), 0, (struct sockaddr *) &svaddr,
+            sizeof(struct sockaddr_un)) != sizeof(data))
+        fatal("sendto");
 
-        numBytes = recvfrom(sfd, resp, BUF_SIZE, 0, NULL, NULL);
-        /* Or equivalently: numBytes = recv(sfd, resp, BUF_SIZE, 0);
-                        or: numBytes = read(sfd, resp, BUF_SIZE); */
-        if (numBytes == -1)
-            errExit("recvfrom");
-        printf("Response %d: %.*s\n", j, (int) numBytes, resp);
-    }
+    t_data response;
+    numBytes = recvfrom(sfd, &response, sizeof(response), 0, NULL, NULL);
+    /* Or equivalently: numBytes = recv(sfd, resp, BUF_SIZE, 0);
+                    or: numBytes = read(sfd, resp, BUF_SIZE); */
+    if (numBytes == -1)
+        errExit("recvfrom");
+    printf("Response %d: %d", response.IO, response.period);
 
     remove(claddr.sun_path);            /* Remove client socket pathname */
     exit(EXIT_SUCCESS);
