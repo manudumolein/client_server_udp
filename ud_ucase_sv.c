@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
         if (numBytes == -1)
             errExit("recvfrom");
 
-        printf("Received %d: %d"    , received_data.IO, received_data.period);
+        printf("Received %d: %d\n", received_data.IO, received_data.period);
         /*FIXME: above: should use %zd here, and remove (long) cast */
 
 
