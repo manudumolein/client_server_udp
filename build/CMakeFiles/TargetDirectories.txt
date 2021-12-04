@@ -1,0 +1,4 @@
+/home/pi/lessen/client_server_udp/build/CMakeFiles/rebuild_cache.dir
+/home/pi/lessen/client_server_udp/build/CMakeFiles/edit_cache.dir
+/home/pi/lessen/client_server_udp/build/CMakeFiles/Client.dir
+/home/pi/lessen/client_server_udp/build/CMakeFiles/Server.dir

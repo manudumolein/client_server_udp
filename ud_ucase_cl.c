@@ -27,8 +27,8 @@ main(int argc, char *argv[])
     ssize_t numBytes;
     char resp[BUF_SIZE];
 
-    if (argc < 2 || strcmp(argv[1], "--help") == 0)
-        usageErr("%s msg...\n", argv[0]);
+    if (argc != 3 || strcmp(argv[1], "--help") == 0)
+        usageErr("%s poort frequentie \n", argv[0]);
 
     /* Create client socket; bind to unique pathname (based on PID) */
 
@@ -52,7 +52,8 @@ main(int argc, char *argv[])
 
     /* Send messages to server; echo responses on stdout */
 
-    t_data data={40,100};
+    t_data data={atoi(argv[1]),atoi(argv[2])};
+  
     if (sendto(sfd, &data, sizeof(data), 0, (struct sockaddr *) &svaddr,
             sizeof(struct sockaddr_un)) != sizeof(data))
         fatal("sendto");

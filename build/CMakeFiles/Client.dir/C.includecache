@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/pi/lessen/client_server_udp/ud_ucase.h
+sys/un.h
+-
+sys/socket.h
+-
+ctype.h
+-
+tlpi_hdr.h
+/home/pi/lessen/client_server_udp/tlpi_hdr.h
+
+/home/pi/lessen/client_server_udp/ud_ucase_cl.c
+ud_ucase.h
+/home/pi/lessen/client_server_udp/ud_ucase.h
+
