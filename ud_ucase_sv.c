@@ -19,7 +19,6 @@
 */
 #include "ud_ucase.h"
 
-#include <gpiod.h>
 #include <stdio.h>
 #include <unistd.h>
 
@@ -27,46 +26,37 @@
 #include <sys/time.h>
 #include <time.h>
 #include "tlpi_hdr.h"
-volatile int count;
+#include "PJ_RPI.h"
+
+struct itimerval itv;
+struct sigaction sa;
+
 int sfd;
 ssize_t numBytes;
 socklen_t len;
 struct sockaddr_un claddr;
+int toggle;
+int port;
 
 static void toggleIO(int sig)
 {
-    // if (sendto(sfd, &count, sizeof(count), 0, (struct sockaddr *)&claddr, len) !=
-    //     numBytes)
-    //     fatal("sendto");
+    if (toggle)
+    {
+        GPIO_SET = (1 << port);
+        printf("port on: %d\r\n", port);
+        toggle = 0;
+    }
+    else
+    {
+        GPIO_CLR = (1 << port);
+        printf("port off: %d\r\n", port);
+        toggle = 1;
+    }
 }
 
 int main(int argc, char *argv[])
 {
     struct sockaddr_un svaddr;
-    int j;
-    char buf[BUF_SIZE];
-
-    const char *chipname = "gpiochip0";
-    struct gpiod_chip *chip;
-    struct gpiod_line *lineRed;
-    struct gpiod_line *lineGreen;
-    struct gpiod_line *lineYellow;
-    int i, val;
-
-    // Open GPIO chip
-    chip = gpiod_chip_open_by_name(chipname);
-
-    // Open GPIO lines
-    lineRed = gpiod_chip_get_line(chip, 24);
-    lineGreen = gpiod_chip_get_line(chip, 25);
-    lineYellow = gpiod_chip_get_line(chip, 5);
-
-    // Open LED lines for output
-    gpiod_line_request_output(lineRed, "example1", 0);
-    gpiod_line_request_output(lineGreen, "example1", 0);
-    gpiod_line_request_output(lineYellow, "example1", 0);
-
-    i = 0;
 
     sfd = socket(AF_UNIX, SOCK_DGRAM, 0); /* Create server socket */
     if (sfd == -1)
@@ -90,44 +80,44 @@ int main(int argc, char *argv[])
     if (bind(sfd, (struct sockaddr *)&svaddr, sizeof(struct sockaddr_un)) == -1)
         errExit("bind");
 
-    /* Receive messages, convert to uppercase, and return to client */
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sa.sa_handler = toggleIO;
+    if (sigaction(SIGALRM, &sa, NULL) == -1)
+        errExit("sigaction");
+
+    itv.it_value.tv_sec = 3;
+    itv.it_value.tv_usec = 0;
+    itv.it_interval.tv_sec = 3;
+    itv.it_interval.tv_usec = 0;
+
+    if (map_peripheral(&gpio) == -1)
+    {
+        printf("Failed to map the physical GPIO registers into the virtual memory space.\n");
+        return -1;
+    }
 
     for (;;)
     {
         t_data received_data;
         len = sizeof(struct sockaddr_un);
-        numBytes = recvfrom(sfd, &received_data, sizeof(received_data), 0,
-                            (struct sockaddr *)&claddr, &len);
-        if (numBytes == -1)
-            errExit("recvfrom");
+        numBytes = recvfrom(sfd, &received_data, sizeof(received_data), 0, (struct sockaddr *)&claddr, &len);
 
-        printf("Received %d: %d\n", received_data.IO, received_data.period);
-        /*FIXME: above: should use %zd here, and remove (long) cast */
+        if (numBytes != -1)
+        {
+            port = received_data.IO;
+            itv.it_interval.tv_sec = received_data.period;
 
+            INP_GPIO(port);
+            OUT_GPIO(port);
 
-        struct sigaction sa;
-        sigemptyset(&sa.sa_mask);
-        sa.sa_flags = 0;
-        sa.sa_handler = toggleIO;
-        if (sigaction(SIGALRM, &sa, NULL) == -1)
-            errExit("sigaction");
+            if (setitimer(ITIMER_REAL, &itv, NULL) == -1)
+                errExit("setitimer");
 
-        struct itimerval itv;
-        itv.it_value.tv_sec = 0;
-        itv.it_value.tv_usec = 1;
-        itv.it_interval.tv_sec = 10;
-        itv.it_interval.tv_usec = 0;
-
-        if (setitimer(ITIMER_REAL, &itv, NULL) == -1)
-            errExit("setitimer");
-
-        gpiod_line_set_value(lineRed, (i & 1) != 0);
-        gpiod_line_set_value(lineGreen, (i & 2) != 0);
-        gpiod_line_set_value(lineYellow, (i & 4) != 0);
-        i++;
-
-        if (sendto(sfd, &received_data, sizeof(received_data), 0, (struct sockaddr *)&claddr, len) !=
-            numBytes)
-            fatal("sendto");
+            printf("Received %d: %d \n", received_data.IO, received_data.period);
+            if (sendto(sfd, &received_data, sizeof(received_data), 0, (struct sockaddr *)&claddr, len) !=
+                numBytes)
+                fatal("sendto");
+        }
     }
 }

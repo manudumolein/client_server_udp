@@ -19,8 +19,6 @@ tlpi_hdr.h
 /home/pi/lessen/client_server_udp/ud_ucase_sv.c
 ud_ucase.h
 /home/pi/lessen/client_server_udp/ud_ucase.h
-gpiod.h
--
 stdio.h
 -
 unistd.h
@@ -33,4 +31,6 @@ time.h
 -
 tlpi_hdr.h
 /home/pi/lessen/client_server_udp/tlpi_hdr.h
+PJ_RPI.h
+/home/pi/lessen/client_server_udp/PJ_RPI.h
 
